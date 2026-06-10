@@ -211,7 +211,7 @@ function Tuner.build(playerGui: Instance, params, callbacks)
 	gui.Name = "PowerShotTuner"
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = true
-	gui.DisplayOrder = 10
+	gui.DisplayOrder = 200 -- above the overlay/display layer
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.Parent = playerGui
 
@@ -273,10 +273,12 @@ function Tuner.build(playerGui: Instance, params, callbacks)
 	local refreshers: { () -> () } = {}
 
 	-- mode + freeze + preset toggles at the top of the scroll
+	local MODES = { "overlay", "analog", "digital" }
 	makeToggle(scroll, function()
-		return "Mode:  " .. (params.mode == "analog" and "ANALOG" or "DIGITAL")
+		return "Mode:  " .. string.upper(params.mode)
 	end, function()
-		params.mode = params.mode == "analog" and "digital" or "analog"
+		local i = table.find(MODES, params.mode) or 1
+		params.mode = MODES[(i % #MODES) + 1]
 	end)
 	makeToggle(scroll, function()
 		return "Tape:  " .. (params.freeze and "FROZEN" or "LIVE")

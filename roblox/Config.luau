@@ -23,6 +23,10 @@ Config.BASE_HEIGHT = 108
 -- frame between updates.
 Config.TARGET_FPS = 24
 
+-- Overlay mode draws crisp 1px scanlines from a separate tiled layer (the damage
+-- layer is too low-res for them). One dark line every SCANLINE_PERIOD screen px.
+Config.SCANLINE_PERIOD = 3
+
 -- rbxassetid of the image to run the effect on. IMPORTANT: this must be an image
 -- you uploaded / own — EditableImage refuses to read assets you don't have rights
 -- to. Leave as "" to use the built-in test pattern (recommended for first run, it
@@ -32,7 +36,7 @@ Config.SOURCE_ASSET_ID = "" -- e.g. "rbxassetid://1234567890"
 -- Default parameter set (mirrors the "cybershot" preset + global controls).
 -- Every key here is also exposed as a slider/toggle in the tuner panel.
 Config.defaults = {
-	mode = "analog", -- "analog" or "digital"
+	mode = "overlay", -- "overlay" (on top of everything), "analog", or "digital"
 	freeze = false, -- pause the animated grain/tape noise
 	resolutionScale = 1.0, -- 0.3 .. 1.0 of BASE_WIDTH/HEIGHT
 	power = 1.0, -- blend source(0) .. full effect(1)

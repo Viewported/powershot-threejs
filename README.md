@@ -80,8 +80,9 @@ Useful controls:
 
 ## Roblox port
 
-A CPU/Luau port that runs the analog-VHS and digital-ISP looks on an
-`EditableImage` (with a J-toggle tuner panel) lives in [`roblox/`](roblox/README.md).
+A CPU/Luau port lives in [`roblox/`](roblox/README.md). It runs the analog-VHS and
+digital-ISP looks on an `EditableImage`, or as a translucent VHS overlay drawn on
+top of the live game/UI — with a J-toggle tuner panel.
 
 # Acknowledgements
 

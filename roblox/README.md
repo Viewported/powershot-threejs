@@ -1,9 +1,17 @@
 # PowerSHOT for Roblox
 
 A Luau port of the [PowerSHOT](../README.md) realtime ISP / analog-VHS filter,
-running on the CPU through an `EditableImage` and displayed fullscreen. Built for
-a lobby screen: the effect animates live and every knob is exposed in a tuner
-panel you toggle with **J**.
+running on the CPU through an `EditableImage`. The effect animates live and every
+knob is exposed in a tuner panel you toggle with **J**.
+
+It runs in one of three modes (switch live from the tuner's **Mode** button):
+
+- **`overlay`** (default) — a translucent VHS **damage layer drawn on top of
+  everything**. The live game and UI below show through and read as a degraded
+  signal: scanlines, animated grain, head-switch tear, dropouts, vignette, color
+  fringe, and a rolling bar.
+- **`analog`** / **`digital`** — run the full warping pipeline on a *source image*
+  (an asset you own, or the built-in test pattern) and show it fullscreen.
 
 > **Heads up — what this is and isn't.** Roblox has no shader/GPU access, so the
 > whole pipeline runs per-pixel in Luau on a small `EditableImage` that's
@@ -12,6 +20,14 @@ panel you toggle with **J**.
 > expensive multi-pass ones (full Bayer mosaic/demosaic, 8×8 JPEG DCT, 25-tap
 > bilateral NR) are approximated, because running them per pixel per frame in
 > Luau is not realtime. See [Fidelity](#fidelity-vs-the-threejs-version).
+>
+> **Overlay mode can't read the pixels below it.** Roblox exposes no way to sample
+> the rendered scene/UI into Lua (no framebuffer read; `CaptureService` is
+> async/throttled and grabs your own overlay too). So overlay mode *composites
+> translucent damage* over the live view — it cannot geometrically warp or
+> chroma-bleed the actual content underneath. Effects that need to read the source
+> (barrel/CA/tracking-shift/true chroma bleed) only apply in the image modes,
+> which run on a static image.
 >
 > These scripts were written against the `EditableImage` API but **not executed
 > in Studio from here** — drop them in and validate. If an API call differs in
@@ -49,10 +65,12 @@ conventions — when pasting by hand the suffix doesn't matter, just match the
 instance **type** and **name** above. If you do use Rojo, the names already map
 correctly.)
 
-## Using your own image
+## Using your own image (image modes only)
 
-By default it renders a built-in SMPTE-style test pattern so you can see every
-effect immediately. To run it on your lobby art instead:
+Overlay mode needs no source — it draws over whatever is already on screen. The
+**`analog`/`digital`** modes process a source image; by default that's a built-in
+SMPTE-style test pattern so you can see every effect immediately. To run those
+modes on your own art instead:
 
 1. Upload the image to Roblox (it **must be an asset you own** — `EditableImage`
    refuses to read assets you don't have rights to).
@@ -71,10 +89,14 @@ effect runs on that.
 ## Controls
 
 - **J** — show/hide the tuner panel.
-- **Mode** — switch between the digital-camera ISP look and the analog VHS look.
+- **Mode** — cycle `overlay` → `analog` → `digital`.
 - **Tape: LIVE/FROZEN** — pause the animated grain/tape noise on a still frame.
 - **Preset** — cycle the five camera presets (Cyber-shot, PowerShot, etc.).
 - **Resolution** — working resolution scale. **Lower this first if it's heavy.**
+- In **overlay** mode the active sliders are VHS amount (master), Power, Tape
+  noise, Scanlines, Head switch, Dropouts, Band mask, Tracking, Chroma bleed,
+  Vignette and Brightness; the source-warping sliders (Barrel, Chromatic
+  aberration, Gamma, CCM, etc.) only do something in the image modes.
 - Every other slider maps 1:1 to a pipeline parameter (see `Tuner.luau`'s
   `SPECS`).
 
