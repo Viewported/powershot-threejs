@@ -78,6 +78,11 @@ Useful controls:
 - `public/logo.png` - PowerSHOT logo.
 - `public/vibe coding.jpg` - default test image.
 
+## Roblox port
+
+A CPU/Luau port that runs the analog-VHS and digital-ISP looks on an
+`EditableImage` (with a J-toggle tuner panel) lives in [`roblox/`](roblox/README.md).
+
 # Acknowledgements
 
 - NTSC
