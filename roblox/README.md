@@ -93,12 +93,35 @@ effect runs on that.
 - **Tape: LIVE/FROZEN** — pause the animated grain/tape noise on a still frame.
 - **Preset** — cycle the five camera presets (Cyber-shot, PowerShot, etc.).
 - **Resolution** — working resolution scale. **Lower this first if it's heavy.**
-- In **overlay** mode the active sliders are VHS amount (master), Power, Tape
-  noise, Scanlines, Head switch, Dropouts, Band mask, Tracking, Chroma bleed,
-  Vignette and Brightness; the source-warping sliders (Barrel, Chromatic
-  aberration, Gamma, CCM, etc.) only do something in the image modes.
+- The tuner **only shows sliders the current mode actually uses** — switching
+  Mode swaps the control set. So in `overlay` you won't see Contrast, Gamma,
+  Barrel, etc., because those grade/warp the source and Roblox can't read the
+  pixels below to apply them. They appear (and work) in the image modes.
 - Every other slider maps 1:1 to a pipeline parameter (see `Tuner.luau`'s
   `SPECS`).
+
+## Export & one-shot script
+
+The tuner has an **EXPORT** section at the bottom. Tune the look you want, hit
+**⤓ Export settings**, and it dumps the current parameters as a Lua table literal
+both to the **Output window** and into a selectable text box (focus it, Ctrl+A,
+Ctrl+C). Example:
+
+```lua
+-- PowerSHOT settings export
+{
+	analogStrength = 1.2,
+	mode = "overlay",
+	power = 1,
+	vignette = 0.4,
+	-- ...
+	ccm = { 1.08, -0.05, -0.01, -0.03, 1.06, -0.04, -0.02, -0.08, 1.06 },
+}
+```
+
+Hand that table over and it can be baked into a **single self-contained
+client `LocalScript`** (no tuner, no ModuleScripts) that just runs your chosen
+effect for every player — drop-in, one file.
 
 ## Performance
 

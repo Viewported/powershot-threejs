@@ -15,38 +15,49 @@ local Tuner = {}
 
 -- Slider / control layout. Each scalar key maps to one slider; `header` rows are
 -- section dividers; `rebuild = true` re-creates the working buffers (resolution).
+-- `modes` lists which modes actually consume the control (derived from the
+-- kernels) — a slider is hidden in modes that ignore it, so you never drag a dead
+-- control. (Contrast/saturation/gamma can't apply in overlay: Roblox can't read
+-- the pixels below to grade them.)
+local ALL = { overlay = true, analog = true, digital = true }
+local DIG = { digital = true }
+local DIG_OV = { digital = true, overlay = true }
+local ANA = { analog = true }
+local ANA_OV = { analog = true, overlay = true }
+local ANA_DIG = { analog = true, digital = true }
+
 local SPECS = {
-	{ header = "GLOBAL" },
-	{ key = "resolutionScale", label = "Resolution", min = 0.3, max = 1.0, rebuild = true },
-	{ key = "power", label = "Power", min = 0, max = 1 },
-	{ key = "noiseScale", label = "Noise scale", min = 0, max = 3 },
-	{ header = "OPTICS" },
-	{ key = "barrel", label = "Barrel distortion", min = 0, max = 0.05, decimals = 3 },
-	{ key = "ca", label = "Chromatic aberration", min = 0, max = 6, decimals = 1 },
-	{ key = "lensSoftness", label = "Lens softness", min = 0, max = 3 },
-	{ key = "vignette", label = "Vignette", min = 0, max = 1 },
-	{ header = "COLOR / SENSOR (digital)" },
-	{ key = "noise", label = "Sensor noise", min = 0, max = 0.05, decimals = 3 },
-	{ key = "sat", label = "Saturation", min = 0, max = 2 },
-	{ key = "gamma", label = "Gamma", min = 0.2, max = 1.2 },
-	{ key = "hiClip", label = "Highlight clip", min = 180, max = 255, decimals = 0 },
-	{ key = "shadow", label = "Shadow crush", min = 0, max = 30, decimals = 0 },
-	{ key = "ccdBloom", label = "CCD bloom", min = 0, max = 3 },
-	{ key = "eeGain", label = "Edge enhance", min = 0, max = 6, decimals = 1 },
-	{ header = "ANALOG VHS" },
-	{ key = "analogStrength", label = "VHS amount", min = 0, max = 3 },
-	{ key = "analogTracking", label = "Tracking", min = 0, max = 3 },
-	{ key = "analogChromaBleed", label = "Chroma bleed", min = 0, max = 3 },
-	{ key = "analogRinging", label = "Ringing", min = 0, max = 3 },
-	{ key = "analogTapeNoise", label = "Tape noise", min = 0, max = 3 },
-	{ key = "analogBandMask", label = "Band mask", min = 0, max = 3 },
-	{ key = "analogEdgeWave", label = "Edge wave", min = 0, max = 3 },
-	{ key = "analogDropouts", label = "Dropouts", min = 0, max = 3 },
-	{ key = "analogScanlines", label = "Scanlines", min = 0, max = 3 },
-	{ key = "analogHeadSwitch", label = "Head switch", min = 0, max = 3 },
-	{ header = "OUTPUT GRADE" },
-	{ key = "brightness", label = "Brightness", min = -1, max = 1 },
-	{ key = "contrast", label = "Contrast", min = -1, max = 1 },
+	{ header = "GLOBAL", modes = ALL },
+	{ key = "resolutionScale", label = "Resolution", min = 0.3, max = 1.0, rebuild = true, modes = ALL },
+	{ key = "power", label = "Power", min = 0, max = 1, modes = ALL },
+	{ key = "noiseScale", label = "Noise scale", min = 0, max = 3, modes = DIG },
+	{ header = "OPTICS", modes = DIG_OV },
+	{ key = "barrel", label = "Barrel distortion", min = 0, max = 0.05, decimals = 3, modes = DIG },
+	{ key = "ca", label = "Chromatic aberration", min = 0, max = 6, decimals = 1, modes = DIG },
+	{ key = "lensSoftness", label = "Lens softness", min = 0, max = 3, modes = DIG },
+	{ key = "vignette", label = "Vignette", min = 0, max = 1, modes = DIG_OV },
+	{ header = "COLOR / SENSOR", modes = DIG },
+	{ key = "noise", label = "Sensor noise", min = 0, max = 0.05, decimals = 3, modes = DIG },
+	{ key = "sat", label = "Saturation", min = 0, max = 2, modes = DIG },
+	{ key = "gamma", label = "Gamma", min = 0.2, max = 1.2, modes = DIG },
+	{ key = "hiClip", label = "Highlight clip", min = 180, max = 255, decimals = 0, modes = DIG },
+	{ key = "shadow", label = "Shadow crush", min = 0, max = 30, decimals = 0, modes = DIG },
+	{ key = "ccdBloom", label = "CCD bloom", min = 0, max = 3, modes = DIG },
+	{ key = "eeGain", label = "Edge enhance", min = 0, max = 6, decimals = 1, modes = DIG },
+	{ header = "ANALOG / OVERLAY", modes = ANA_OV },
+	{ key = "analogStrength", label = "VHS amount", min = 0, max = 3, modes = ANA_OV },
+	{ key = "analogTracking", label = "Tracking", min = 0, max = 3, modes = ANA_OV },
+	{ key = "analogChromaBleed", label = "Chroma bleed", min = 0, max = 3, modes = ANA_OV },
+	{ key = "analogRinging", label = "Ringing", min = 0, max = 3, modes = ANA },
+	{ key = "analogTapeNoise", label = "Tape noise", min = 0, max = 3, modes = ANA_OV },
+	{ key = "analogBandMask", label = "Band mask", min = 0, max = 3, modes = ANA_OV },
+	{ key = "analogEdgeWave", label = "Edge wave", min = 0, max = 3, modes = ANA },
+	{ key = "analogDropouts", label = "Dropouts", min = 0, max = 3, modes = ANA_OV },
+	{ key = "analogScanlines", label = "Scanlines", min = 0, max = 3, modes = ANA_OV },
+	{ key = "analogHeadSwitch", label = "Head switch", min = 0, max = 3, modes = ANA_OV },
+	{ header = "OUTPUT GRADE", modes = ALL },
+	{ key = "brightness", label = "Brightness", min = -1, max = 1, modes = ALL },
+	{ key = "contrast", label = "Contrast", min = -1, max = 1, modes = ANA_DIG },
 }
 
 local BG = Color3.fromRGB(14, 16, 20)
@@ -63,8 +74,47 @@ local function fmt(value: number, decimals: number?): string
 	return string.format("%." .. d .. "f", value)
 end
 
--- one labelled slider row; returns a `refresh` fn that re-reads params[key].
-local function makeSlider(parent: Instance, spec, params, callbacks): () -> ()
+-- compact number literal: integers stay integers, everything else trimmed to 6sf
+local function numToStr(v: number): string
+	if v == math.floor(v) and math.abs(v) < 1e7 then
+		return string.format("%d", v)
+	end
+	return string.format("%.6g", v)
+end
+
+-- Serialize the live params into a Lua table literal you can paste back to bake a
+-- one-shot script. Keys are sorted for a stable diff; ccm is emitted as an array.
+local function serialize(params): string
+	local keys = {}
+	for k in params do
+		if k ~= "ccm" then
+			table.insert(keys, k)
+		end
+	end
+	table.sort(keys)
+	local out = { "-- PowerSHOT settings export", "{" }
+	for _, k in keys do
+		local v = params[k]
+		local ty = typeof(v)
+		if ty == "number" then
+			table.insert(out, string.format("\t%s = %s,", k, numToStr(v)))
+		elseif ty == "boolean" then
+			table.insert(out, string.format("\t%s = %s,", k, tostring(v)))
+		elseif ty == "string" then
+			table.insert(out, string.format("\t%s = %q,", k, v))
+		end
+	end
+	local ccm = {}
+	for _, n in params.ccm do
+		table.insert(ccm, numToStr(n))
+	end
+	table.insert(out, "\tccm = { " .. table.concat(ccm, ", ") .. " },")
+	table.insert(out, "}")
+	return table.concat(out, "\n")
+end
+
+-- one labelled slider row; returns (row, refresh) where refresh re-reads params[key].
+local function makeSlider(parent: Instance, spec, params, callbacks): (Frame, () -> ())
 	local key = spec.key
 	local minV, maxV = spec.min, spec.max
 	local decimals = spec.decimals
@@ -166,12 +216,12 @@ local function makeSlider(parent: Instance, spec, params, callbacks): () -> ()
 	end)
 
 	setDisplay(params[key])
-	return function()
+	return row, function()
 		setDisplay(params[key])
 	end
 end
 
-local function makeHeader(parent: Instance, text: string)
+local function makeHeader(parent: Instance, text: string): TextLabel
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 22)
 	label.BackgroundTransparency = 1
@@ -181,6 +231,7 @@ local function makeHeader(parent: Instance, text: string)
 	label.TextColor3 = DIM
 	label.Text = text
 	label.Parent = parent
+	return label
 end
 
 local function makeToggle(parent: Instance, getText: () -> string, onClick: () -> ()): TextButton
@@ -271,23 +322,37 @@ function Tuner.build(playerGui: Instance, params, callbacks)
 	layout.Parent = scroll
 
 	local refreshers: { () -> () } = {}
+	local entries: { { gui: GuiObject, modes: { [string]: boolean } } } = {}
+	local order = 0
+	local function place(gui: GuiObject): GuiObject
+		order += 1
+		gui.LayoutOrder = order
+		return gui
+	end
 
-	-- mode + freeze + preset toggles at the top of the scroll
+	local function updateVisibility()
+		for _, e in entries do
+			e.gui.Visible = e.modes[params.mode] == true
+		end
+	end
+
+	-- mode + freeze + preset + export toggles (always visible)
 	local MODES = { "overlay", "analog", "digital" }
-	makeToggle(scroll, function()
+	place(makeToggle(scroll, function()
 		return "Mode:  " .. string.upper(params.mode)
 	end, function()
 		local i = table.find(MODES, params.mode) or 1
 		params.mode = MODES[(i % #MODES) + 1]
-	end)
-	makeToggle(scroll, function()
+		updateVisibility()
+	end))
+	place(makeToggle(scroll, function()
 		return "Tape:  " .. (params.freeze and "FROZEN" or "LIVE")
 	end, function()
 		params.freeze = not params.freeze
-	end)
+	end))
 
 	local presetIndex = 1
-	makeToggle(scroll, function()
+	place(makeToggle(scroll, function()
 		return "Preset:  " .. Config.PRESET_KEYS[presetIndex]
 	end, function()
 		presetIndex = (presetIndex % #Config.PRESET_KEYS) + 1
@@ -295,15 +360,57 @@ function Tuner.build(playerGui: Instance, params, callbacks)
 		for _, refresh in refreshers do
 			refresh()
 		end
-	end)
+	end))
 
 	for _, spec in SPECS do
 		if spec.header then
-			makeHeader(scroll, spec.header)
+			local label = makeHeader(scroll, spec.header)
+			place(label)
+			table.insert(entries, { gui = label, modes = spec.modes })
 		else
-			table.insert(refreshers, makeSlider(scroll, spec, params, callbacks))
+			local row, refresh = makeSlider(scroll, spec, params, callbacks)
+			place(row)
+			table.insert(entries, { gui = row, modes = spec.modes })
+			table.insert(refreshers, refresh)
 		end
 	end
+
+	-- EXPORT: dump live settings to the Output window and a selectable box
+	-- (focus it, Ctrl+A, Ctrl+C). Paste the result back to bake a one-shot script.
+	place(makeHeader(scroll, "EXPORT"))
+	local exportBox = Instance.new("TextBox")
+	exportBox.Size = UDim2.new(1, 0, 0, 160)
+	exportBox.BackgroundColor3 = BG2
+	exportBox.TextColor3 = TEXT
+	exportBox.Font = Enum.Font.Code
+	exportBox.TextSize = 11
+	exportBox.TextXAlignment = Enum.TextXAlignment.Left
+	exportBox.TextYAlignment = Enum.TextYAlignment.Top
+	exportBox.TextWrapped = true
+	exportBox.ClearTextOnFocus = false
+	exportBox.MultiLine = true
+	exportBox.TextEditable = true
+	exportBox.Text = "press Export below, then select-all + copy this box\n(also printed to the Output window)"
+	exportBox.Parent = scroll
+	local exportCorner = Instance.new("UICorner")
+	exportCorner.CornerRadius = UDim.new(0, 6)
+	exportCorner.Parent = exportBox
+	local exportPad = Instance.new("UIPadding")
+	exportPad.PaddingTop = UDim.new(0, 6)
+	exportPad.PaddingBottom = UDim.new(0, 6)
+	exportPad.PaddingLeft = UDim.new(0, 8)
+	exportPad.PaddingRight = UDim.new(0, 8)
+	exportPad.Parent = exportBox
+	place(makeToggle(scroll, function()
+		return "⤓ Export settings"
+	end, function()
+		local s = serialize(params)
+		exportBox.Text = s
+		print("[PowerSHOT] settings export:\n" .. s)
+	end))
+	place(exportBox)
+
+	updateVisibility()
 
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		if gameProcessed then
