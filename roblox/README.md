@@ -121,7 +121,23 @@ Ctrl+C). Example:
 
 Hand that table over and it can be baked into a **single self-contained
 client `LocalScript`** (no tuner, no ModuleScripts) that just runs your chosen
-effect for every player — drop-in, one file.
+effect for every player — drop-in, one file. A baked example lives at
+[`oneshot/PowerShotOverlay.client.luau`](oneshot/PowerShotOverlay.client.luau):
+it runs the overlay damage layer **and** grades the live 3D scene
+(brightness/contrast/saturation/tint/bloom) through Lighting post-effects — see
+[Grading the live scene](#grading-the-live-scene).
+
+## Grading the live scene
+
+Roblox can't read the rendered scene into Lua, but it *can* post-process the 3D
+view through **Lighting** effects (`ColorCorrectionEffect`, `BloomEffect`,
+`BlurEffect`, …). Those are real GPU passes on the actual world. The one-shot uses
+them so the look isn't just a flat overlay — **contrast, saturation, brightness,
+tint and bloom apply to the live scene** behind your UI (created locally, so only
+that player sees it). It's the closest Roblox allows to running the image-mode
+grade on live content. The remaining VHS damage (scanlines, grain, tracking,
+dropouts, head-switch) stays in the translucent overlay on top. True *geometric*
+warps (barrel, chroma displacement) still need a static source image.
 
 ## Performance
 
